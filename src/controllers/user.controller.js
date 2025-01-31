@@ -4,6 +4,7 @@ import {User} from "../models/user.model.js"
 import {uploadonCloudinary} from "../utils/cloudinary.js"
 import {ApiResponse} from "../utils/ApiResponse.js"
 import jwt from "jsonwebtoken"
+import mongoose from "mongoose"
 
 
 const generateAccessAndRefreshTokens = async (userId) => {
@@ -242,7 +243,7 @@ const changeCurrentPassword = asyncHandler(async (req,res) => {
 const getCurrentUser = asyncHandler(async(req,res) => {
    return res
    .status(200)
-   .json(200,req.user,"Current User fetched Successfully")
+   .json(new ApiResponse(200,req.user,"Current User fetched Successfully"))
 })
 
 const updateAccountDetails = asyncHandler(async (req,res) => {
@@ -393,7 +394,7 @@ const getUserChannelProfile = asyncHandler(async (req,res) => {
    .json(new ApiResponse(200,channel[0],"user channel fectched successfully"))
 })
 
-const getWatchHistory = asyncHandler(async(reqe,res) => {
+const getWatchHistory = asyncHandler(async(req,res) => {
    const user = await User.aggregate([
       {
          $match: {
