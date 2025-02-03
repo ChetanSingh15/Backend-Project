@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose , {isValidObjectId} from "mongoose";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
@@ -6,10 +6,12 @@ import { Video } from "../models/video.model.js";
 import {uploadonCloudinary} from "../utils/cloudinary.js"
 import { User } from "../models/user.model.js";
 
+
 const getAllVideos = asyncHandler(async (req,res) => {
     const {page = 1 ,limit = 10, query , sortBy, sortType , userId } = req.query
     // TODO: get all videos based on query , sort , pagination
 })
+
 
 const publishAVideo = asyncHandler(async (req,res) => {
     const {title,description} = req.body;
@@ -23,7 +25,7 @@ const publishAVideo = asyncHandler(async (req,res) => {
 
     // console.log(videoLocalPath);
     // console.log(thumbnailLocalPath);
-    console.log(req.user)
+    // console.log(req.user) -- This is also resolved
 
 
     if(!videoLocalPath || !thumbnailLocalPath){
@@ -89,6 +91,12 @@ const updateVideo = asyncHandler( async (req,res) => {
     }
     // console.log(thumbnail.url)
 
+    const videoForCheckingUser = await Video.findById(videoId);
+
+    if(videoForCheckingUser?.owner.toString() !== req.user?._id.toString()){
+        throw new ApiError(401,"Only video owner can update the video credentials")
+    }
+
     const video = await Video.findByIdAndUpdate(
         videoId,
         {
@@ -118,14 +126,14 @@ const deleteVideo  = asyncHandler(async (req , res) => {
         throw new ApiError(400,"Video is required")
     }
 
-    // console.log(req.user) // ***Not getting user in req.user, I will check it later*
+    // console.log(req.user) // ***Not getting user in req.user, I will check it later* ---- This is done. I was not verifying the user using veifyJWT. But now it is resolved
 
     // console.log(video?.owner);
     // console.log(req.user?._id);
 
-    // if(video?.owner !== req.user?._id){
-    //     throw new ApiError(402,"Only video owner can delete the video")
-    // } // *** Somehow I am not getting anything in req.user. I will check it later 
+    if(video?.owner.toString() !== req.user?._id.toString()){
+        throw new ApiError(401,"Only video owner can delete the video")
+    } // *** Somehow I am not getting anything in req.user. I will check it later --- This is resolved. Explanation in line 123.
 
     await Video.findByIdAndDelete(videoId);
 
@@ -146,6 +154,10 @@ const togglePublishStatus = asyncHandler(async (req,res) => {
 
     if(!video){
         throw new ApiError(404,"Video not found")
+    }
+
+    if(video?.owner.toString() !== req.user?._id.toString()){
+        throw new ApiError(401,"Only video owner can toggle this status")
     }
 
     video.isPublished = !video.isPublished
