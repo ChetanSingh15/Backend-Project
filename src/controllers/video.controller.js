@@ -4,6 +4,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Video } from "../models/video.model.js";
 import {uploadonCloudinary} from "../utils/cloudinary.js"
+import { User } from "../models/user.model.js";
 
 const getAllVideos = asyncHandler(async (req,res) => {
     const {page = 1 ,limit = 10, query , sortBy, sortType , userId } = req.query
@@ -22,6 +23,7 @@ const publishAVideo = asyncHandler(async (req,res) => {
 
     // console.log(videoLocalPath);
     // console.log(thumbnailLocalPath);
+    console.log(req.user)
 
 
     if(!videoLocalPath || !thumbnailLocalPath){
@@ -30,6 +32,8 @@ const publishAVideo = asyncHandler(async (req,res) => {
 
     const videoFile = await uploadonCloudinary(videoLocalPath)
     const thumbnail = await uploadonCloudinary(thumbnailLocalPath)
+
+    // console.log(req.user?._id)
 
     const video  = await Video.create({
         videoFile: videoFile.url,
@@ -107,10 +111,49 @@ const updateVideo = asyncHandler( async (req,res) => {
 const deleteVideo  = asyncHandler(async (req , res) => {
     const {videoId} = req.params
     // TODO: delete video
+
+    const video = await Video.findById(videoId)
+
+    if(!video){
+        throw new ApiError(400,"Video is required")
+    }
+
+    // console.log(req.user) // ***Not getting user in req.user, I will check it later*
+
+    // console.log(video?.owner);
+    // console.log(req.user?._id);
+
+    // if(video?.owner !== req.user?._id){
+    //     throw new ApiError(402,"Only video owner can delete the video")
+    // } // *** Somehow I am not getting anything in req.user. I will check it later 
+
+    await Video.findByIdAndDelete(videoId);
+
+    Video.deleteMany({
+        video: videoId,
+        owner: req.user?._id
+    })
+
+    return res
+    .status(200)
+    .json(new ApiResponse(200,{video},"Video deleted successfully"))
 })
 
 const togglePublishStatus = asyncHandler(async (req,res) => {
     const {videoId} = req.params
+
+    const video = await Video.findById(videoId);
+
+    if(!video){
+        throw new ApiError(404,"Video not found")
+    }
+
+    video.isPublished = !video.isPublished
+    await video.save({validateBeforeSave: false})
+
+    return res
+    .status(200)
+    .json(new ApiResponse(200,video,"togglePublishStatus implemented successfully"))
 })
  
 export{
