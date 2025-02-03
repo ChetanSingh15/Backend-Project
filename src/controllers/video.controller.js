@@ -49,7 +49,75 @@ const publishAVideo = asyncHandler(async (req,res) => {
     .json(new ApiResponse(200,video,"Video uploaded successfully"))
 })
 
+const getVideoById = asyncHandler(async (req,res) => {
+    const {videoId} = req.params
+    // TODO: get video by id
+    const video = await Video.findById(videoId)
+
+    if(!video) {
+        throw new ApiError(404,"Video not found")
+    }
+
+    return res
+    .status(200)
+    .json(new ApiResponse(200,video,"Video fetched successfully"))
+})
+
+const updateVideo = asyncHandler( async (req,res) => {
+    const {videoId} = req.params
+    // TODO: update video details like title , description , thumbnail
+    const { title , description } = req.body
+    
+    if(!title || !description) {
+        throw new ApiError(400,"Title and description are required")
+    }
+
+    const thumbnailLocalPath = req.file?.path
+
+    const thumbnail = await uploadonCloudinary(thumbnailLocalPath)
+
+    // if(thumbnailLocalPath && !thumbnail.url){
+    //     throw new ApiError(400,"Error while uploading thumbnail")
+    // } // This can be used when you gave the user the flexibility to only change the title and description. The video need not be required to change the thumbnail
+
+    if(!thumbnail.url) {
+        throw new ApiError(400,"Error while uplaoding the thumbnail")
+    }
+    // console.log(thumbnail.url)
+
+    const video = await Video.findByIdAndUpdate(
+        videoId,
+        {
+            $set: {
+                title: title,
+                description: description,
+                thumbnail: thumbnail?.url
+            }
+        },
+        {
+            new:true
+        }
+    )
+
+    return res
+    .status(200)
+    .json(new ApiResponse(200,video,"Video fields updated successfully"))
+})
+
+const deleteVideo  = asyncHandler(async (req , res) => {
+    const {videoId} = req.params
+    // TODO: delete video
+})
+
+const togglePublishStatus = asyncHandler(async (req,res) => {
+    const {videoId} = req.params
+})
+ 
 export{
     getAllVideos,
-    publishAVideo
+    publishAVideo,
+    getVideoById,
+    updateVideo,
+    deleteVideo,
+    togglePublishStatus
 }
