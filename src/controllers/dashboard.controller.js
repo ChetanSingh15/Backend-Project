@@ -6,7 +6,7 @@ import { Video } from "../models/video.model.js";
 import { Like } from "../models/like.model.js";
 import { Subscription } from "../models/subscription.model.js";
 
-const getChannelStatus = asyncHandler(async (req,res) => {
+const getChannelStats = asyncHandler(async (req,res) => {
     // TODO: get the channel stats like total video views, total subscribers , total videos, total likes etc.
     const userId = req.user?._id;
 
@@ -136,6 +136,6 @@ const getChannelVideos = asyncHandler(async (req,res) => {
 })
 
 export {
-    getChannelStatus,
+    getChannelStats,
     getChannelVideos
 }
